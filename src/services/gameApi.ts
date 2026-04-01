@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = 'https://bingo-back-end-dpn1.vercel.app';
+const BASE = 'https://bingo-back-end.onrender.com';
 
 function authHeader() {
   const token = localStorage.getItem('bingo_token');
