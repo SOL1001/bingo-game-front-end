@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api/auth' });
+const api = axios.create({ baseURL: 'https://bingo-back-end-dpn1.vercel.app/api/auth' });
 
 export interface AuthUser {
   id: string;
