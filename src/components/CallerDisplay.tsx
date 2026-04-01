@@ -6,6 +6,7 @@ interface CallerDisplayProps {
   calling: boolean;
   isWinner: boolean;
   poolEmpty: boolean;
+  isGuest?: boolean;
 }
 
 function columnLetter(n: number): string {
@@ -16,90 +17,84 @@ function columnLetter(n: number): string {
   return 'O';
 }
 
-const LETTER_COLOR: Record<string, string> = {
-  B: '#00bfff',
-  I: '#ff6ec7',
-  N: '#ffe600',
-  G: '#00FFD1',
-  O: '#ff9900',
-};
-
-const BADGE_BG: Record<string, string> = {
-  B: '#00bfff22',
-  I: '#ff6ec722',
-  N: '#ffe60022',
-  G: '#00FFD122',
-  O: '#ff990022',
-};
-
 const CallerDisplay: React.FC<CallerDisplayProps> = ({
-  calledNumbers,
-  onCall,
-  calling,
-  isWinner,
-  poolEmpty,
+  calledNumbers, onCall, calling, isWinner, poolEmpty, isGuest = false,
 }) => {
   const last = calledNumbers[calledNumbers.length - 1];
+  const recent = [...calledNumbers].reverse().slice(0, 5);
   const canCall = !calling && !isWinner && !poolEmpty;
-  const letter = last !== undefined ? columnLetter(last) : null;
 
   return (
-    <div className="rounded-2xl p-4 flex flex-col gap-4 border" style={{ background: '#0F2027cc', borderColor: '#2C5364' }}>
+    <div className="flex flex-col gap-3 p-4 h-full overflow-y-auto"
+      style={{ scrollbarWidth: 'none' }}>
 
-      {/* Last called */}
-      <div className="text-center">
-        <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#4a8a8a' }}>Last Called</p>
-        <div className="rounded-xl py-5 px-2 flex flex-col items-center justify-center min-h-24 border"
-          style={{ background: '#203A43', borderColor: '#2C5364' }}>
-          {letter ? (
-            <>
-              <span style={{ fontSize: '3.5rem', fontWeight: 900, lineHeight: 1, color: LETTER_COLOR[letter], textShadow: '0 0 12px ' + LETTER_COLOR[letter] }}>
-                {letter}
-              </span>
-              <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, color: '#ffffff', marginTop: 4 }}>
-                {last}
-              </span>
-            </>
-          ) : (
-            <span style={{ color: '#2C5364', fontSize: '2rem', fontWeight: 700 }}>—</span>
+      {/* Last Called card */}
+      <div className="rounded-2xl p-5 flex flex-col items-center gap-4"
+        style={{ background: '#131929' }}>
+        <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: '#4a5568' }}>
+          Last Called
+        </p>
+
+        {/* Big circle */}
+        <div className="w-24 h-24 rounded-full flex items-center justify-center"
+          style={{ background: last !== undefined ? 'linear-gradient(145deg,#7c6fe0,#5b4fcf)' : '#1e2a3a', boxShadow: last !== undefined ? '0 0 30px #7c6fe055' : 'none' }}>
+          <span className="font-black" style={{ fontSize: '2.4rem', color: '#fff' }}>
+            {last !== undefined ? String(last).padStart(2, '0') : '—'}
+          </span>
+        </div>
+
+        {/* Call button */}
+        <button onClick={onCall} disabled={calling || isWinner || poolEmpty}
+          className="w-full font-black py-3 rounded-xl tracking-widest text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+          style={{ background: canCall || isGuest ? 'linear-gradient(90deg,#7c6fe0,#5b4fcf)' : '#1e2a3a', color: '#fff', boxShadow: canCall || isGuest ? '0 4px 20px #7c6fe055' : 'none' }}>
+          {isGuest ? 'Sign In to Play' : calling ? 'Calling...' : isWinner ? 'You Won!' : poolEmpty ? 'All Called' : 'Call Next Number'}
+        </button>
+      </div>
+
+      {/* Ball History card */}
+      <div className="rounded-2xl p-4" style={{ background: '#131929' }}>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#e2e8f0' }}>Ball History</p>
+          <p className="text-xs" style={{ color: '#4a5568' }}>Recently Called</p>
+        </div>
+        <div className="flex gap-2 justify-start">
+          {recent.length === 0 && (
+            <p className="text-xs" style={{ color: '#4a5568' }}>No numbers called yet</p>
           )}
+          {recent.map((n, i) => (
+            <div key={i}
+              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+              style={{ background: i === 0 ? 'linear-gradient(145deg,#7c6fe0,#5b4fcf)' : '#1e2a3a', color: '#fff', boxShadow: i === 0 ? '0 0 12px #7c6fe066' : 'none' }}>
+              {String(n).padStart(2, '0')}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Call button */}
-      <button
-        onClick={onCall}
-        disabled={!canCall}
-        className="font-bold py-2 px-4 rounded-xl transition-all w-full disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ background: canCall ? 'linear-gradient(90deg, #00FFD1, #00bfff)' : '#2C5364', color: '#0F2027', boxShadow: canCall ? '0 0 12px #00FFD166' : 'none' }}
-      >
-        {calling ? 'Calling...' : poolEmpty ? 'No More Numbers' : 'Call Next'}
-      </button>
+      {/* Progress card */}
+      <div className="rounded-2xl p-4" style={{ background: '#131929' }}>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#e2e8f0' }}>Progress</p>
+          <p className="text-xs font-bold" style={{ color: '#7c6fe0' }}>{calledNumbers.length} / 75</p>
+        </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: '#1e2a3a' }}>
+          <div className="h-full rounded-full transition-all duration-500"
+            style={{ width: ((calledNumbers.length / 75) * 100) + '%', background: 'linear-gradient(90deg,#7c6fe0,#5b4fcf)' }} />
+        </div>
+      </div>
 
-      {/* History */}
+      {/* Full history */}
       {calledNumbers.length > 0 && (
-        <div>
-          <p className="text-xs uppercase tracking-widest mb-2 text-center" style={{ color: '#4a8a8a' }}>
-            Called ({calledNumbers.length}/75)
-          </p>
-          <div className="flex flex-wrap gap-1 justify-center max-h-40 overflow-y-auto">
-            {[...calledNumbers].reverse().map((n, i) => {
-              const l = columnLetter(n);
-              const isLatest = i === 0;
-              return (
-                <span
-                  key={i}
-                  className="text-xs font-bold px-1.5 py-0.5 rounded"
-                  style={{
-                    background: isLatest ? LETTER_COLOR[l] : BADGE_BG[l],
-                    color: isLatest ? '#0F2027' : LETTER_COLOR[l],
-                    boxShadow: isLatest ? '0 0 8px ' + LETTER_COLOR[l] : 'none',
-                  }}
-                >
-                  {l}{n}
-                </span>
-              );
-            })}
+        <div className="rounded-2xl p-4 flex-1" style={{ background: '#131929' }}>
+          <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#e2e8f0' }}>All Called</p>
+          <div className="flex flex-wrap gap-1.5">
+            {[...calledNumbers].reverse().map((n, i) => (
+              <span key={i}
+                className="text-xs font-bold px-2 py-1 rounded-lg"
+                style={{ background: i === 0 ? '#7c6fe0' : '#1e2a3a', color: i === 0 ? '#fff' : '#8892a4' }}>
+                {columnLetter(n)}{String(n).padStart(2, '0')}
+              </span>
+            ))}
           </div>
         </div>
       )}
